@@ -1,0 +1,67 @@
+#!/usr/bin/perl -w
+
+use Net::OpenSSH;
+#use Net::Telnet ();
+use IO::Pty;
+
+
+#if ($#ARGV != 0){
+#        usage();
+#        exit;
+#}
+
+
+my $host=$ARGV[0];
+my $username="temperature";
+my $password="";
+my $private_key_path="/root/.ssh/known_hosts";
+my $cmd="show version";
+my $log="server_temp";
+my $line;
+my $temperature;
+my $ok=44;
+my $warning=48;
+my $date;
+
+#open(LOG,">>$log");
+my $ssh = Net::OpenSSH->new('temperature:@172.29.0.20', async => 1);
+$ssh->error and die "Couldn't establish SSH connection: ". $ssh->error;
+
+$output=get_temp($log,$cmd);
+
+#if ($temperature < $ok) { print "Temperature OK: $temperature\n"; exit 0 }
+#if ($temperature < $warning) { print "Temperature Warm: $temperature\n"; exit 1 }
+#if ($temperature >= $warning) { print "Heatpump Failure: $temperature\n"; exit 2 }
+#print "Unknown\n";
+#exit 3;
+
+sub get_temp {
+my $logfile=shift;
+my $cmd=shift;
+my $date=get_formatted_date();
+my $file="$logfile.$date";
+my @output = $ssh->capture2($cmd);
+$ssh->error and die "$cmd command failed: " . $ssh->error;
+open(LOG,">>$file");
+foreach $line (@output) { print LOG "$line"; print $line; }
+close LOG;
+return $file;
+}
+
+
+sub get_formatted_date {
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+        my $month = ($mon + 1);
+        $year += 1900;
+        #my $date = sprintf("%4d%02d%02d_%02d%02d%02d",$year,$month,$mday,$hour,$min,$sec);
+        my $date = sprintf("%4d-%02d-%02d %02d:%02d:%02d",$year,$month,$mday,$hour,$min,$sec);
+        return $date;
+        }
+
+sub usage {
+        print "Usage notes:
+	$0 <switch ip>\n";
+	exit 3;
+}
+
+	

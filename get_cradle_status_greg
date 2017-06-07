@@ -1,0 +1,113 @@
+#!/usr/bin/perl -w
+
+#use LWP::Simple;
+
+if ($#ARGV != 1){
+        usage();
+        exit
+}
+
+my $hss=$ARGV[0];
+my $cradle=$ARGV[1];
+my $log="/tmp/perfecto_cradle_status.log";
+my $debug=0;
+
+my @mce = ("10.1.6.21","10.1.6.22","192.168.237.25","1.21.11.31","1.21.11.32");
+
+my %cradle_id = (
+			'192.168.237.11' => 'A80080jj',
+			'192.168.237.12' => 'A80080jo',
+			'192.168.237.13' => 'A700eT45',
+			'192.168.237.14' => 'A6007Ztl',
+			'192.168.237.15' => 'A6007Zt5',
+			'192.168.237.16' => 'A700eIrR',
+			'192.168.237.17' => 'A7004QYn',
+			'192.168.237.18' => 'AH00R2M9',
+			'192.168.237.19' => 'AH00R2W9',
+			'172.18.130.20' => 'A6007ZGr',
+                        '172.18.130.21' => 'A20e1t2e',
+			'192.168.237.22' => 'A6VMO5AD',
+			'192.168.237.26' => 'A700eT3W',
+			'192.168.237.81' => 'A700eHMx',
+			'192.168.237.23' => 'A600cpKw',
+                        '192.168.237.24' => 'A9014UKQ',
+                        '192.168.237.25.1' => '005525',
+                        '192.168.237.25.2' => '005552',
+                        '1.21.11.31.1' => '005484',
+                        '1.21.11.31.2' => '005571',
+                        '1.21.11.32.1' => '005488',
+                        '1.21.11.32.2' => '005608',
+			'10.1.6.21.1' => '005165',
+			'10.1.6.21.2' => '006510',
+			'10.1.6.22.1' => '006509',
+			'10.1.6.22.2' => '007441',
+			'10.1.6.23' => 'A80080jc'
+		);
+
+	
+if($hss ~~ @mce) { $temp=$hss . "." . $cradle; query_cradle($hss,$cradle_id{$temp},"1"); }
+else { query_cradle($hss,$cradle_id{$hss},$cradle); }
+
+sub query_cradle {
+	my $hss=shift;
+	my $ddm=shift;
+	my $description_code=-1;
+	my $status_code=-1;
+	my $exit_code=-1;
+	my $manufacturer="";
+	my $device="";
+	my $model="";
+	my $status="Unknown";
+	my $cradle="0" . shift;
+
+	if ($debug) { print "HSS=$hss,DDM=$ddm,Cradle=$cradle";}
+
+	my $xml_output=`curl -s "http://$hss/$ddm/$cradle/cradle/status"`;
+
+	if ($debug) { print $xml_output; }
+
+	my $date=get_formatted_date();
+	if($xml_output =~ m/description code="(\d).*/g) {
+		$description_code = $1;
+		}
+	if($xml_output =~ m/status code="(.*)".*/g) {
+		$status_code = $1;
+		}
+	if($xml_output =~ m/<manufacturer>(.*)<\/manufacturer>.*/g) {
+		$manufacturer = $1;
+		if($xml_output =~ m/<model>(.*)<\/model>.*/g) {
+			$model = $1;
+			}
+		}
+	if($description_code==0) { print "Cradle is Empty\n"; $status="Idle"; $exit_code=1; }
+	elsif($description_code==1 && $status_code==1) { $device = $manufacturer . " " . $model; print "Cradle is Running with $device\n"; $status="Running"; $exit_code=0; }
+	elsif($description_code==1 && $status_code!=1) { $device = $manufacturer . " " . $model; print "Cradle is in error\n"; $status="Error"; $exit_code=2; }
+	elsif($description_code==2 || $description_code == -1) { print "Cradle is in Error\n"; $status="Error"; $exit_code=2; }
+	else { $exit_code=3; }
+
+	if ($debug) { print "\n\ndescritption code=$description_code, status_code=$status_code, device=$device\n"; }
+	
+	if (!$debug) {
+		open (LOG,">>$log");
+		printf LOG ("%s,%s,%s,%s,%s\n",$date,$hss,$cradle,$status,$device);
+		close LOG;
+	}
+	exit $exit_code;
+}
+
+sub get_formatted_date {
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+        my $month = ($mon + 1);
+        $year += 1900;
+        my $date = sprintf("%4d-%02d-%02d %02d:%02d:%02d",$year,$month,$mday,$hour,$min,$sec);
+        return $date;
+        }
+
+sub usage {
+	print "Usage notes:
+$0 <HSS IP> <Cradle Number>
+$0 192.168.237.17 1
+";
+exit 3;
+}
+

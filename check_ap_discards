@@ -1,0 +1,15 @@
+#!/usr/bin/perl -w
+
+my $host=$ARGV[0];
+my $interface=$ARGV[1];
+
+my $object="ifInDiscards";
+
+my $result=`snmpget -v1 $host -c public $object.$interface`;
+$result =~ m/(\d+)$/;
+my $discards=$1;
+
+if ($discards == 0) { print "No Discards\n"; exit 0 }
+if ($discards > 0) { print "AP at $host has discarded $discards packets\n"; exit 2 }
+print "Unknown\n";
+exit 3;

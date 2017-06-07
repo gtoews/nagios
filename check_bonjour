@@ -1,0 +1,18 @@
+#!/bin/bash
+BonjourName="$1" 
+AVAHI_RESULT=$(avahi-resolve -4 -n "$BonjourName" $2 < /dev/null)
+
+IP=$(echo $AVAHI_RESULT | awk '{ print $2 }')
+if [ -z $IP ]
+then
+ echo "Bonjour host not resolved"
+ exit 2
+fi
+PING_RESULT=$(ping -c 3 $IP $2 < /dev/null | tail -n 1)
+if [ $? -ne 0 ]
+then
+ echo "Bonjour host not responding"
+ exit 2
+fi
+echo "Current ip address: $IP| $PING_RESULT"
+exit 0

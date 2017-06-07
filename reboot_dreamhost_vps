@@ -1,0 +1,35 @@
+#!/bin/sh
+####
+#### USE THIS SCRIPT AT YOUR OWN RISK.  
+####
+
+PS=$1
+LOG_FILE=$2
+
+#KEY=475G8NVRRPD8F2VX
+KEY=CEUKMDH8KAUNP78U
+
+UUID=`uuidgen`
+CMD=dreamhost_ps-reboot
+#CMD=dreamhost_ps-list_reboot_history
+
+ 
+if [ $# -lt 1 ]; then
+ 	echo "usage: `basename $0` [hostname]" 
+	exit 1
+fi
+
+if [ "$PS" = "" ]; then
+	PS=`hostname | cut -f1 -d.`
+fi 
+
+LINK="https://api.dreamhost.com/?key=$KEY&unique_id=$UUID&cmd=$CMD&ps=$PS&$ARGS"
+
+RESPONSE=`wget -O- -q "$LINK"`
+
+echo "$LINK" >>	$LOG_FILE
+echo "$RESPONSE" >> $LOG_FILE 
+
+if ! (echo $RESPONSE | grep -q 'success'); then
+	exit 1
+fi

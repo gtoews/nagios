@@ -1,0 +1,2 @@
+#!/bin/bash
+/usr/bin/sipp -s 500 -ap password -r 1 205.166.179.12:5060 -sf /usr/local/nagios/libexec/custom/test_call.xml -i 10.1.1.30 -m 1 -d 15000 -timeout 20s -timeout_error -max_retrans 1

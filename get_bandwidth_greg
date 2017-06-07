@@ -1,0 +1,69 @@
+#!/usr/bin/perl -w
+
+my $switch=$ARGV[0];
+my $port=$ARGV[1];
+my $inbound=$ARGV[2];
+my $sample_time=5;
+my $warning_threshold=10;
+my $critical_threshold=20;
+my $log="/tmp/bandwidth.log";
+my $debug=0;
+
+if ($inbound) {
+	my $start_bytes_in=`snmpget -c public -v2c $switch ifInOctets.$port | awk {'print \$4'}`;
+	if ($debug) { print $start_bytes_in }
+	chomp $start_bytes_in;
+	sleep $sample_time;
+	my $end_bytes_in=`snmpget -c public -v2c $switch ifInOctets.$port | awk {'print \$4'}`;
+	if ($debug) { print $end_bytes_in }
+	chomp $end_bytes_in;
+	my $delta_in=$end_bytes_in-$start_bytes_in;
+	my $ingress_data_rate=(($delta_in * 8)/(1048576)/$sample_time);
+	my $date=get_formatted_date();
+	open (LOG,">>$log");
+	printf LOG ("%s,%.2f,ingress,%s,%s\n",$date,$ingress_data_rate,$switch,$port);
+	close LOG;
+	if ($port == 21) { 
+		if ($ingress_data_rate < $warning_threshold) { printf ("Rate OK: %.2f Mbps\n",$ingress_data_rate); exit 0 }
+		if ($ingress_data_rate >= $warning_threshold && $ingress_data_rate < 2) { printf ("Rate Warning: %.2f Mbps\n",$ingress_data_rate); exit 1 }
+		if ($ingress_data_rate >= $critical_threshold) { printf ("Rate Critical: %.2f Mbps\n",$ingress_data_rate); exit 2 }
+		print "Unknown\n";
+		exit 3;
+	}
+	else
+		{ printf ("%.2f Mbps\n",$ingress_data_rate); exit 0 }
+
+}
+else {
+	my $start_bytes_out=`snmpget -c public -v2c $switch ifOutOctets.$port | awk {'print \$4'}`;
+	if ($debug) { print $start_bytes_out }
+	chomp $start_bytes_out;
+	sleep $sample_time;
+	my $end_bytes_out=`snmpget -c public -v2c $switch ifOutOctets.$port | awk {'print \$4'}`;
+	if ($debug) { print $end_bytes_out }
+	chomp $end_bytes_out;
+	my $delta_out=$end_bytes_out-$start_bytes_out;
+	my $egress_data_rate=(($delta_out * 8)/(1048576)/$sample_time);
+	my $date=get_formatted_date();
+	open (LOG,">>$log");
+	printf LOG ("%s,%.2f,egress,%s,%s\n",$date,$egress_data_rate,$switch,$port);
+	close LOG;
+	if ($port == 21) { 
+		if ($egress_data_rate < $warning_threshold) { printf ("Rate OK: %.2f Mbps\n",$egress_data_rate); exit 0 }
+		if ($egress_data_rate >= $warning_threshold && $egress_data_rate < 2) { printf ("Rate Warning: %.2f Mbps\n",$egress_data_rate); exit 1 }
+		if ($egress_data_rate >= $critical_threshold) { printf ("Rate Critical: %.2f Mbps\n",$egress_data_rate); exit 2 }
+		print "Unknown\n";
+		exit 3;
+	}
+	else
+		{ printf ("%.2f Mbps\n",$egress_data_rate); exit 0 }
+}
+
+sub get_formatted_date {
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+        my $month = ($mon + 1);
+        $year += 1900;
+        my $date = sprintf("%4d-%02d-%02d %02d:%02d:%02d",$year,$month,$mday,$hour,$min,$sec);
+        return $date;
+        }
+

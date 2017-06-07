@@ -1,0 +1,13 @@
+#!/usr/bin/perl -w
+
+my $host=$ARGV[0];
+my $port=$ARGV[1];
+
+my $object="ifOperStatus";
+
+my $result=`snmpget -v1 $host -c public $object.$port`;
+
+if ($result=~/up/) { print "Port Up\n"; exit 0 }
+if ($result=~/down/) { print "Port Down\n"; exit 2 }
+print "Unknown\n";
+exit 3;

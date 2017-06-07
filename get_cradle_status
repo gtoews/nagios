@@ -1,0 +1,89 @@
+#!/usr/bin/perl -w
+
+#use LWP::Simple;
+
+if ($#ARGV != 1){
+        usage();
+        exit
+}
+
+my $hss=$ARGV[0];
+my $cradle=$ARGV[1];
+my $warning_threshold;
+my $critical_threshold;
+my $log="/tmp/perfecto_cradle_status.log";
+my $debug=0;
+
+my %cradle_id = (
+			'192.168.237.11' => 'A80080jj',
+			'192.168.237.12' => 'A80080jo',
+			'192.168.237.13' => 'A700eT45',
+			'192.168.237.14' => 'A6007Ztl',
+			'192.168.237.15' => 'A6007Zt5',
+			'192.168.237.16' => 'A700eIrR',
+			'192.168.237.17' => 'A7004QYn',
+			'192.168.237.18' => 'AH00R2M9',
+			'192.168.237.19' => 'AH00R2W9',
+			'172.18.130.20' => 'A6007ZGr',
+			'172.18.130.21' => 'A20e1t2e',
+			'192.168.237.22' => 'A6VMO5AD',
+			'192.168.237.26' => 'A700eT3W',
+			'192.168.237.81' => 'A700eHMx'
+		);
+
+
+query_cradle($hss,$cradle_id{$hss},$cradle);
+#query_cradle($cradles[0]->{ip},$cradles[0]->{cradle_id},1);
+#query_cradle($hss,$ddm,$cradle);
+#query_cradle("192.168.237.17","A7004QYn","1");
+
+
+
+
+sub query_cradle {
+	my $hss=shift;
+	my $ddm=shift;
+	my $result=-1;
+	my $cradle="0" . shift;
+	if ($debug) { print "HSS=$hss,DDM=$ddm,Cradle=$cradle" }
+	my $xml_output=`curl -s "http://$hss/$ddm/$cradle/cradle/status" | grep "description code"`;
+	if ($debug) { print $xml_output; }
+	my $date=get_formatted_date();
+	if($xml_output =~ m/(\d)/g) {
+		$result = $1;
+		}
+	if($result==0) { print "Cradle is Idle\n"; exit 1; }
+	if($result==1) { print "Cradle is Running\n"; exit 0; }
+	if($result==2) { print "Cradle is Error\n"; exit 2; }
+	exit 3;	
+	#open (LOG,">>$log");
+	#printf LOG ("%s,%.2f,$direction,%s,%s\n",$date,$data_rate,$switch,$user);
+	#close LOG;
+
+	#if ($alarm) { 
+	#	if ($data_rate < $warning_threshold) { printf ("Rate OK: %.2f Mbps\n",$data_rate); exit 0 }
+	#	if ($data_rate >= $warning_threshold && $data_rate < $critical_threshold) { printf ("Rate Warning: %.2f Mbps\n",$data_rate); exit 1 }
+	#	if ($data_rate >= $critical_threshold) { printf ("Rate Critical: %.2f Mbps\n",$data_rate); exit 2 }
+	#	print "Unknown\n";
+	#	exit 3;
+	#}
+	#else
+	#	{ printf ("%.2f Mbps\n",$data_rate); exit 0 }
+}
+
+sub get_formatted_date {
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+        my $month = ($mon + 1);
+        $year += 1900;
+        my $date = sprintf("%4d-%02d-%02d %02d:%02d:%02d",$year,$month,$mday,$hour,$min,$sec);
+        return $date;
+        }
+
+sub usage {
+	print "Usage notes:
+$0 <HSS IP> <Cradle Number>
+$0 192.168.237.17 1
+";
+exit 3;
+}
+

@@ -1,0 +1,121 @@
+#!/usr/bin/perl -w
+
+if ($#ARGV != 2){
+        usage();
+        exit
+}
+
+my $switch=$ARGV[0];
+my $port=$ARGV[1];
+my $flow=$ARGV[2];
+my $sample_time=10;
+my $warning_threshold;
+my $critical_threshold;
+my $log="/tmp/bandwidth.log";
+my $debug=0;
+my $direction;
+my $oid;
+my $alarm;
+my $user;
+
+
+
+if ($port==21) {
+	$user = "Perfecto";
+	$alarm = 1;
+	$warning_threshold=10;
+	$critical_threshold=20;
+	if ($flow) { query_switch("egress","ifInOctets") } 
+	else { query_switch("ingress","ifOutOctets") }
+	}
+
+elsif ($port==13) {
+	$user = "Total";
+	$alarm = 1;
+	$warning_threshold=80;
+	$critical_threshold=90;
+        if ($flow) { query_switch("egress","ifOutOctets") }
+        else { query_switch("ingress","ifInOctets") }
+        }
+
+elsif ($port==49) {
+	$user = "BCNet";
+	$alarm = 1;
+	$warning_threshold=80;
+	$critical_threshold=90;
+        if ($flow) { query_switch("egress","ifOutOctets") }
+        else { query_switch("ingress","ifInOctets") }
+        }
+
+elsif ($port==50) {
+	$user = "Colony";
+	$alarm = 1;
+	$warning_threshold=4;
+	$critical_threshold=8;
+        if ($flow) { query_switch("egress","ifInOctets") }
+        else { query_switch("ingress","ifOutOctets") }
+        }
+
+elsif ($port==52) {
+	$user = "Wavefront";
+	$alarm = 1;
+	$warning_threshold=80;
+	$critical_threshold=90;
+        if ($flow) { query_switch("egress","ifInOctets") }
+        else { query_switch("ingress","ifOutOctets") }
+        }
+
+else { $user = "Unknown"; exit 3; }
+
+
+if ($debug) { print "Direction is $direction, User is $user\n"; }
+
+sub query_switch {
+	my $direction=shift;
+	my $oid=shift;
+	my $start_bytes=`snmpget -c public -v2c $switch $oid.$port | awk {'print \$4'}`;
+	if ($debug) { print $start_bytes }
+	chomp $start_bytes;
+	sleep $sample_time;
+	my $end_bytes=`snmpget -c public -v2c $switch $oid.$port | awk {'print \$4'}`;
+	if ($debug) { print $end_bytes }
+	chomp $end_bytes;
+	my $delta=$end_bytes-$start_bytes;
+	my $data_rate=(($delta * 8)/(1048576)/$sample_time);
+	if ($data_rate < 0 || $data_rate > 100) { exit 0 }
+	my $date=get_formatted_date();
+
+	open (LOG,">>$log");
+	printf LOG ("%s,%.2f,$direction,%s,%s\n",$date,$data_rate,$switch,$user);
+	close LOG;
+
+	if ($alarm) { 
+		if ($data_rate < $warning_threshold) { printf ("Rate OK: %.2f Mbps\n",$data_rate); exit 0 }
+		if ($data_rate >= $warning_threshold && $data_rate < $critical_threshold) { printf ("Rate Warning: %.2f Mbps\n",$data_rate); exit 1 }
+		if ($data_rate >= $critical_threshold) { printf ("Rate Critical: %.2f Mbps\n",$data_rate); exit 2 }
+		print "Unknown\n";
+		exit 3;
+	}
+	else
+		{ printf ("%.2f Mbps\n",$data_rate); exit 0 }
+}
+
+
+sub get_formatted_date {
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+        my $month = ($mon + 1);
+        $year += 1900;
+        my $date = sprintf("%4d-%02d-%02d %02d:%02d:%02d",$year,$month,$mday,$hour,$min,$sec);
+        return $date;
+        }
+
+sub usage {
+	print "Usage notes:
+$0 <switch ip> <port number> <flow direction>
+where ingress (with respect to Wavefront) is 0 and egress is 1
+for example:
+$0 172.29.0.2 21 0
+";
+exit 3;
+}
+

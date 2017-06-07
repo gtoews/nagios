@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<result>
+	<status result="OK">
+		<description code="1" status="OK">running</description>
+	</status>
+	<info>
+		<engine>
+			<host>1.1.100.10</host>
+			<port>8080</port>
+			<registerPath>/nexperience/handset/updateHandset/register</registerPath>
+		</engine>
+		<dock id="A7004QYn">
+			<description>dock A7004QYn</description>
+			<location>Canada</location>
+			<type>ddm_second_generation</type>
+			<board>
+				<type>ddm_second_generation</type>
+				<serialNumber>A7004QYn</serialNumber>
+			</board>
+			<charging>
+				<switchToWallCharger>false</switchToWallCharger>
+			</charging>
+		</dock>
+		<cradle index="1">
+			<description>Cradle 01</description>
+			<access>A7004QYn/01</access>
+			<product_version>HSS-V2041</product_version>
+			<video>
+				<RecordingStatus code="0">off</RecordingStatus>
+				<streaming>true</streaming>
+				<PauseVideo>false</PauseVideo>
+				<HasAudio>false</HasAudio>
+				<server>172.18.131.37</server>
+				<application>/live</application>
+				<external_host>vc-vstream.perfectomobile.com</external_host>
+				<protocol>rtmp</protocol>
+				<server_id>172.18.131.37</server_id>hssId_CAN-HS-17-cradle_A7004QYn/01-536B796B<video_stream_adaptation>
+					<frames_encoding_cycle>
+						<pass>1</pass>
+						<drop>0</drop>
+					</frames_encoding_cycle>
+				</video_stream_adaptation>
+			</video>
+			<audio>Cannot connect to audio device [M-Audio Delta 1010LT 1/2]</audio>
+			<hssid>CAN-HS-17</hssid>
+			<status code="1">running</status>
+			<camera>
+				<type>PmasPersistentCamera</type>
+				<videoImageSource>device</videoImageSource>
+			</camera>
+		</cradle>
+		<cradleVersion>
+			<build_number>4</build_number>
+			<build_date>2014-03-31_13-47-26</build_date>
+			<build_version>2014-03-31_13-47-26.cradles.2.18.0.0.4</build_version>
+			<dev_version>2.18.0.0</dev_version>
+			<build_timestamp>${timestamp}</build_timestamp>
+			<scm_version>${buildNumber}</scm_version>
+		</cradleVersion>
+		<handset>
+			<manufacturer>HTC</manufacturer>
+			<model>HTC-X710a</model>
+			<version>3.38.666.2 CL359369 release-keys</version>
+			<imei>HT17WVJ00087</imei>
+			<wifi-mac-address>d4:20:6d:72:8a:01</wifi-mac-address>
+			<imsi>UNKNOWN</imsi>
+			<client-version>UNKNOWN</client-version>
+			<os-version>4.0.3</os-version>
+			<template-data>
+				<manufacturer>HTC</manufacturer>
+				<model>Raider</model>
+				<distributor>Bell Mobility-Canada</distributor>
+			</template-data>
+		</handset>
+	</info>
+	<time64>
+		<time>1400870369</time>
+		<millitm>760</millitm>
+		<timezone>0</timezone>
+		<dstflag>0</dstflag>
+	</time64>
+	<flv_stat>
+		<disconnections>0</disconnections>
+		<disconnections_during_play>0</disconnections_during_play>
+		<play_time>0</play_time>
+		<avg_play_time>0</avg_play_time>
+		<play_sessions>0</play_sessions>
+	</flv_stat>
+	<video_width>540</video_width>
+	<video_height>960</video_height>
+	<req_time>1371997395</req_time>
+	<duration>47</duration>
+	<sys_start_time>Wed May 07 21:32:52 2014</sys_start_time>
+	<sys_uptime>15 days 21:06:37</sys_uptime>
+	<sys_error_count>1435</sys_error_count>
+	<camera initialized="true">
+		<type>PmasPersistentCamera</type>
+		<videoImageSource>device</videoImageSource>
+		<maintenance_mode>false</maintenance_mode>
+		<settings>
+			<fps>6</fps>
+			<roi>
+				<x>0</x>
+				<y>0</y>
+				<w>540</w>
+				<h>960</h>
+			</roi>
+			<feature id="FEATURE_FRAME_RATE">
+				<param>6</param>
+			</feature>
+		</settings>
+	</camera>
+</result>

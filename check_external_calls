@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+
+system("/usr/local/nagios/libexec/custom/make_external_call > /dev/null 2>&1");
+$result=`echo $?`;
+chomp $result;
+
+if ($result==0) { print "Test call success"; exit 0 }
+else { print "Test call failed"; exit 2 }

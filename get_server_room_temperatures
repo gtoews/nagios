@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+
+use Net::OpenSSH;
+use Net::Telnet ();
+
+
+if ($#ARGV != 0){
+        usage();
+        exit
+}
+
+
+my $host=$ARGV[0];
+my $username="temperature";
+my $password="";
+my $cmd;
+if ($host eq "172.29.0.40") { $cmd="show system fans unit 1"; }
+else { $cmd="show system"; }
+my $log="/tmp/server_temp.log";
+my $line;
+my $temperature;
+my $ok=44;
+my $warning=48;
+if ($host eq "172.29.0.40") { $warning=54; $ok=50; }
+my $date;
+
+open(LOG,">>$log");
+my $t=new Net::Telnet (Timeout => 5);
+$t->open($host);
+$t->waitfor('/User/');
+#$t->waitfor('/User:$/');
+$t->print($username);
+$t->waitfor('/Password:$/');
+$t->print($password);
+#$t->waitfor('/>$/');
+$t->waitfor('/>/');
+$t->print($cmd);
+my @lines;
+
+if ($host eq "172.29.0.40") { @lines = $t->waitfor('/4000/'); }
+else { @lines = $t->waitfor('/OK/'); }
+
+foreach $line (@lines) {
+	if ($line =~ m/(\d+)\s+$/g) {
+		$temperature=$1;
+		chomp $temperature;
+		$date=get_formatted_date();
+		print LOG "$date,$host,$temperature\n";
+	}
+}
+close LOG;
+if ($temperature < $ok) { print "Temperature OK: $temperature\n"; exit 0 }
+if ($temperature < $warning) { print "Temperature Warm: $temperature\n"; exit 1 }
+if ($temperature >= $warning) { print "Heatpump Failure: $temperature\n"; exit 2 }
+print "Unknown\n";
+exit 3;
+
+sub get_formatted_date {
+        my ($sec,$min,$hour,$mday,$mon,$year) = localtime(time);
+        my $month = ($mon + 1);
+        $year += 1900;
+        #my $date = sprintf("%4d%02d%02d_%02d%02d%02d",$year,$month,$mday,$hour,$min,$sec);
+        my $date = sprintf("%4d-%02d-%02d %02d:%02d:%02d",$year,$month,$mday,$hour,$min,$sec);
+        return $date;
+        }
+
+sub usage {
+        print "Usage notes:
+	$0 <switch ip>\n";
+	exit 3;
+}
+
+	
